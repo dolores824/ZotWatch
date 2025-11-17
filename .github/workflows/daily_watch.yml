@@ -5,7 +5,7 @@ on:
     - cron: "5 22 * * *"  #北京时间6点05运行
   push:
     branches:
-      - main
+      - copilot/add-group-library-support
   workflow_dispatch:
 
 jobs:
