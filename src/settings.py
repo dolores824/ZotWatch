@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field, validator
 
 class ZoteroApiConfig(BaseModel):
     user_id: str = Field(..., alias="user_id")
+    group_id: Optional[str] = Field(None, alias="group_id")
     api_key_env: str = Field("ZOTERO_API_KEY", alias="api_key_env")
     page_size: int = 100
     polite_delay_ms: int = 200
@@ -121,12 +122,30 @@ class Settings(BaseModel):
 
 
 def _expand_env_vars(data: Any) -> Any:
+    """Expand environment variables in configuration data.
+    
+    Supports both $VAR and ${VAR} syntax, as well as ${VAR:-default} for defaults.
+    """
     if isinstance(data, dict):
         return {k: _expand_env_vars(v) for k, v in data.items()}
     if isinstance(data, list):
         return [_expand_env_vars(item) for item in data]
     if isinstance(data, str):
-        return os.path.expandvars(data)
+        # Handle ${VAR:-default} syntax manually
+        import re
+        def replace_with_default(match):
+            var_name = match.group(1)
+            # Group 3 contains the default value (after :-)
+            default_value = match.group(3) if match.group(3) is not None else ""
+            return os.getenv(var_name, default_value)
+        
+        # Pattern to match ${VAR:-default} or ${VAR}
+        pattern = r'\$\{([A-Za-z_][A-Za-z0-9_]*)(:-([^}]*))?\}'
+        expanded = re.sub(pattern, replace_with_default, data)
+        
+        # Also handle simple $VAR syntax using os.path.expandvars
+        expanded = os.path.expandvars(expanded)
+        return expanded
     return data
 
 def _load_yaml(path: Path) -> Dict[str, Any]:

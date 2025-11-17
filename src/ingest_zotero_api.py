@@ -37,8 +37,15 @@ class ZoteroClient:
                 "User-Agent": "ZotWatcher/0.1",
             }
         )
-        self.base_user_url = f"{API_BASE}/users/{settings.zotero.api.user_id}"
-        self.base_items_url = f"{self.base_user_url}/items"
+        
+        # Determine base library URL based on group_id presence
+        group_id = settings.zotero.api.group_id
+        if group_id:
+            self.base_library_url = f"{API_BASE}/groups/{group_id}"
+        else:
+            self.base_library_url = f"{API_BASE}/users/{settings.zotero.api.user_id}"
+        
+        self.base_items_url = f"{self.base_library_url}/items"
         self.polite_delay = settings.zotero.api.polite_delay_ms / 1000
 
     def iter_items(self, since_version: Optional[int] = None) -> Iterable[requests.Response]:
@@ -68,7 +75,7 @@ class ZoteroClient:
     def fetch_deleted(self, since_version: Optional[int]) -> List[str]:
         if since_version is None:
             return []
-        url = f"{self.base_user_url}/deleted"
+        url = f"{self.base_library_url}/deleted"
         resp = self.session.get(url, params={"since": since_version})
         resp.raise_for_status()
         payload = resp.json() or {}
