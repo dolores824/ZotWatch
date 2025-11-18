@@ -41,7 +41,8 @@ jobs:
             data/profile.sqlite
             data/faiss.index
             data/profile.json
-          key: profile-${{ env.CACHE_KEY }}
+          # key: profile-${{ env.CACHE_KEY }}
+          key: profile-group-${{ env.CACHE_KEY }}
       - run: pip install -r requirements.txt
       - name: Build Zotero profile
         if: steps.cache-profile.outputs.cache-hit != 'true'
