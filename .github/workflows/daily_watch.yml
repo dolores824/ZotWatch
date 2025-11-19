@@ -18,6 +18,7 @@ jobs:
     env:
       ZOTERO_API_KEY: ${{ secrets.ZOTERO_API_KEY }}
       ZOTERO_USER_ID: ${{ secrets.ZOTERO_USER_ID }}
+      ZOTERO_GROUP_ID: ${{ secrets.ZOTERO_GROUP_ID }}
       ALTMETRIC_KEY: ${{ secrets.ALTMETRIC_KEY }}
       OPENALEX_MAILTO: ${{ secrets.OPENALEX_MAILTO }}
       CROSSREF_MAILTO: ${{ secrets.CROSSREF_MAILTO }}
@@ -40,7 +41,8 @@ jobs:
             data/profile.sqlite
             data/faiss.index
             data/profile.json
-          key: profile-${{ env.CACHE_KEY }}
+          # key: profile-${{ env.CACHE_KEY }}
+          key: profile-group-${{ env.CACHE_KEY }}
       - run: pip install -r requirements.txt
       - name: Build Zotero profile
         if: steps.cache-profile.outputs.cache-hit != 'true'

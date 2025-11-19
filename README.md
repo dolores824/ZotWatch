@@ -3,7 +3,7 @@
 ZotWatcher 是一个基于 Zotero 数据构建个人兴趣画像，并持续监测学术信息源的新文献推荐流程。它每日在 GitHub Actions 上运行，将最新候选文章生成 RSS/HTML 报告，必要时也可在本地手动执行。
 
 ## 功能概览
-- **Zotero 同步**：通过 Zotero Web API 获取文库条目，增量更新本地画像。
+- **Zotero 同步**：通过 Zotero Web API 获取文库条目（支持个人文库和群组文库），增量更新本地画像。
 - **画像构建**：对条目向量化，提取高频作者/期刊，并记录近期热门期刊。
 - **候选抓取**：拉取 Crossref、arXiv、bioRxiv/medRxiv（可选）等数据源，并对热门期刊做额外精准抓取。
 - **去重打分**：结合语义相似度、时间衰减、引用/Altmetric、SJR 期刊指标及白名单加分生成推荐列表。
@@ -24,6 +24,7 @@ ZotWatcher 是一个基于 Zotero 数据构建个人兴趣画像，并持续监�
 
    - `ZOTERO_API_KEY`，此为获取 Zotero 数据库中现有个人信息所必须。登录 Zotero 网站的[个人账户](https://www.zotero.org/settings/)后，在 **Settings - Security - Applications** 处点击 **Create new private key**，其中 Personal Library 给予 Allow library access，Default Group Permissions 给予 Read Only 权限，保存获得 API。
    - `ZOTERO_USER_ID`，该 ID 可从上述 **Settings - Security - Applications** 处 **Create new private key** 按钮下方一行 `User ID: Your user ID for use in API calls is ******` 获取。
+   - （可选）`ZOTERO_GROUP_ID`，如果希望基于 Zotero **群组文库**而非个人文库构建画像，请设置此值为群组 ID。从群组页面 URL（如 `https://www.zotero.org/groups/6311723/fh_shared/library`）中获取数字部分（`6311723`）作为群组 ID。**注意**：如果设置了 `ZOTERO_GROUP_ID`，ZotWatch 将仅使用该群组文库，而不使用个人文库。
    -  `OPENALEX_MAILTO`，邮箱地址，用于部分网站 API 请求时的礼貌标注。
    -  `CROSSREF_MAILTO`，邮箱地址，用于部分网站 API 请求时的礼貌标注。
      ![image3](images/image3.png)
@@ -58,7 +59,9 @@ ZotWatcher 是一个基于 Zotero 数据构建个人兴趣画像，并持续监�
    在仓库根目录创建 `.env` 或 GitHub Secrets，至少包含：
    - `ZOTERO_API_KEY`：Zotero Web API 访问密钥
    - `ZOTERO_USER_ID`：Zotero 用户 ID（数字）
+   
    可选：
+   - `ZOTERO_GROUP_ID`：Zotero 群组 ID（数字），如果希望基于群组文库而非个人文库构建画像。从群组 URL（如 `https://www.zotero.org/groups/6311723/fh_shared/library`）中提取数字部分。
    - `ALTMETRIC_KEY`：用于获取 Altmetric 数据
    - `OPENALEX_MAILTO`/`CROSSREF_MAILTO`：覆盖默认监测邮箱
 
@@ -79,6 +82,37 @@ ZotWatcher 是一个基于 Zotero 数据构建个人兴趣画像，并持续监�
 ├─ reports/               # 生成的 RSS/HTML 输出
 └─ .github/workflows/     # GitHub Actions 配置
 ```
+
+## 使用 Zotero 群组文库
+
+ZotWatch 支持从 Zotero **群组文库**（Group Library）而非个人文库构建画像和推荐。这对于团队协作场景很有用。
+
+### 获取群组 ID
+
+1. 在 Zotero 网页版中打开你的群组文库
+2. 从 URL 中提取群组 ID，例如：
+   - URL: `https://www.zotero.org/groups/6311723/fh_shared/library`
+   - 群组 ID: `6311723`（URL 中 `/groups/` 后的数字部分）
+
+### 配置群组文库
+
+**GitHub Actions 使用：**
+1. 在仓库的 **Settings → Secrets and variables → Actions** 中添加新的 secret：
+   - Name: `ZOTERO_GROUP_ID`
+   - Value: 你的群组 ID（如 `6311723`）
+
+**本地使用：**
+在 `.env` 文件中添加：
+```
+ZOTERO_GROUP_ID=6311723
+```
+
+### 工作模式
+
+- **仅设置 `ZOTERO_USER_ID`**：ZotWatch 使用个人文库（默认行为）
+- **设置 `ZOTERO_GROUP_ID`**：ZotWatch 使用指定的群组文库，忽略个人文库
+
+**注意**：`ZOTERO_API_KEY` 必须对所选群组具有读取权限。在创建 API Key 时，确保 "Default Group Permissions" 设置为 "Read Only" 或更高权限。
 
 ## 自定义配置
 - `config/zotero.yaml`：Zotero API 参数（`user_id` 可写 `$ {ZOTERO_USER_ID}`，将由 `.env`/Secrets 注入）。
