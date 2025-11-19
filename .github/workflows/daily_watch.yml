@@ -1,8 +1,8 @@
 name: Daily Watch & RSS
 
 on:
-  schedule:
-    - cron: "5 22 * * *"  #北京时间6点05运行
+  # schedule:
+  #   - cron: "5 22 * * *"  #北京时间6点05运行
   push:
     branches:
       - copilot/add-group-library-support
